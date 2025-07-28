@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	_"github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // Database connection instance
@@ -169,7 +169,18 @@ func getAllMigrations() []Migration {
 					name TEXT NOT NULL,
 					username TEXT UNIQUE NOT NULL,
 					password TEXT NOT NULL,
-					role TEXT NOT NULL CHECK (role IN ('admin', 'cashier')),
+					role TEXT NOT NULL CHECK (role IN ('admin', 'treasurer')),
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+				);
+
+				-- members table
+				CREATE TABLE IF NOT EXISTS members (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					name TEXT NOT NULL,
+					phoneno TEXT UNIQUE NOT NULL,
+					email TEXT UNIQUE,
+					group TEXT,
 					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 					updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 				);
@@ -178,6 +189,8 @@ func getAllMigrations() []Migration {
 				CREATE TABLE IF NOT EXISTS accounts (
 					id INTEGER PRIMARY KEY AUTOINCREMENT,
 					name TEXT UNIQUE NOT NULL,
+					type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+					trustfund_share REAL DEFAULT 0, 
 					description TEXT,
 					is_active BOOLEAN DEFAULT 1,
 					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -199,62 +212,46 @@ func getAllMigrations() []Migration {
 		},
 		{
 			Version:     2,
-			Description: "Create payments table",
+			Description: "Create transactions table",
 			SQL: `
-				-- Payments table
-				CREATE TABLE IF NOT EXISTS payments (
+				-- transactions table
+				CREATE TABLE IF NOT EXISTS patransacyments (
 					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					member_name TEXT NOT NULL,
 					phone_number TEXT NOT NULL,
 					amount REAL NOT NULL CHECK (amount > 0),
-					account_id INTEGER NOT NULL,
+					member_id INTEGER NOT NULL,
 					date TEXT NOT NULL,
-					receipt_id TEXT UNIQUE NOT NULL,
+					trans_ref TEXT,
+					trans_type TEXT NOT NULL CHECK (trans_type IN ('income', 'expense')),
 					sms_sent BOOLEAN DEFAULT 0,
 					notes TEXT,
 					created_by INTEGER,
 					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 					updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-					FOREIGN KEY (account_id) REFERENCES accounts(id),
+					FOREIGN KEY (member_id) REFERENCES accounts(id),
 					FOREIGN KEY (created_by) REFERENCES users(id)
+				);
+
+				-- transaction_items table
+				CREATE TABLE IF NOT EXISTS transaction_items (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					transaction_id INTEGER NOT NULL,
+					account_id INTEGER NOT NULL,
+					amount REAL NOT NULL CHECK (amount > 0),
+					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+					FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+					FOREIGN KEY (account_id) REFERENCES accounts(id)
 				);
 
 				-- Create indexes for better performance
 				CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(date);
-				CREATE INDEX IF NOT EXISTS idx_payments_account ON payments(account_id);
 				CREATE INDEX IF NOT EXISTS idx_payments_member ON payments(member_name);
 				CREATE INDEX IF NOT EXISTS idx_payments_receipt ON payments(receipt_id);
 			`,
 		},
+
 		{
 			Version:     3,
-			Description: "Create expenses table",
-			SQL: `
-				-- Expenses table
-				CREATE TABLE IF NOT EXISTS expenses (
-					id INTEGER PRIMARY KEY AUTOINCREMENT,
-					description TEXT NOT NULL,
-					amount REAL NOT NULL CHECK (amount > 0),
-					account_id INTEGER NOT NULL,
-					date TEXT NOT NULL,
-					receipt_number TEXT,
-					vendor TEXT,
-					notes TEXT,
-					created_by INTEGER,
-					created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-					updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-					FOREIGN KEY (account_id) REFERENCES accounts(id),
-					FOREIGN KEY (created_by) REFERENCES users(id)
-				);
-
-				-- Create indexes for better performance
-				CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
-				CREATE INDEX IF NOT EXISTS idx_expenses_account ON expenses(account_id);
-				CREATE INDEX IF NOT EXISTS idx_expenses_description ON expenses(description);
-			`,
-		},
-		{
-			Version:     4,
 			Description: "Add audit triggers for updated_at timestamps",
 			SQL: `
 				-- Trigger to update updated_at for users
@@ -287,7 +284,7 @@ func getAllMigrations() []Migration {
 			`,
 		},
 		{
-			Version:     5,
+			Version:     6,
 			Description: "Create sessions table for JWT token management",
 			SQL: `
 				-- Sessions table for token management
@@ -318,11 +315,11 @@ func getAllMigrations() []Migration {
 
 // DatabaseStats represents database statistics
 type DatabaseStats struct {
-	TotalUsers    int
-	TotalAccounts int
-	TotalPayments int
-	TotalExpenses int
-	DatabaseSize  int64
+	TotalUsers             int
+	TotalAccounts          int
+	TotalTransactions      int
+	Totaltransaction_items int
+	DatabaseSize           int64
 }
 
 // GetDatabaseStats returns current database statistics
@@ -333,8 +330,8 @@ func GetDatabaseStats() (*DatabaseStats, error) {
 	queries := map[string]*int{
 		"SELECT COUNT(*) FROM users":    &stats.TotalUsers,
 		"SELECT COUNT(*) FROM accounts": &stats.TotalAccounts,
-		"SELECT COUNT(*) FROM payments": &stats.TotalPayments,
-		"SELECT COUNT(*) FROM expenses": &stats.TotalExpenses,
+		"SELECT COUNT(*) FROM payments": &stats.TotalTransactions,
+		"SELECT COUNT(*) FROM expenses": &stats.Totaltransaction_items,
 	}
 
 	for query, target := range queries {
