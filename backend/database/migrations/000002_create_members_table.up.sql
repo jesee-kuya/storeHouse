@@ -4,8 +4,8 @@ CREATE TABLE members (
     full_name VARCHAR(100) NOT NULL,
     phone_number VARCHAR(20) NOT NULL,
     email VARCHAR(100),
-    address TEXT,
     notes TEXT,
+    group UUID REFERENCES members_groups(id),
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
