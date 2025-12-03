@@ -51,3 +51,13 @@ func DeactivateAccount(db *sqlx.DB, id string) (models.Account, error) {
 
 	return exercuteQuery(db, query, acc)
 }
+
+func GetAccount(db *sqlx.DB, id string) (models.Account, error) {
+	var acc models.Account
+	err := db.Get(&acc, "SELECT * FROM accounts WHERE id = $1", id)
+	if err != nil {
+		return models.Account{}, err
+	}
+
+	return acc, nil
+}
