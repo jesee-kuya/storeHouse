@@ -8,6 +8,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+
+
+func exercuteQuery(db *sqlx.DB, query string, acc models.Account)  (models.Account, error) {
+	_, err := db.NamedExec(query, acc)
+	if err != nil {
+		return models.Account{}, err
+	}
+
+	return acc, nil
+}
+
 func CreateAccount(db *sqlx.DB, acc models.Account) (models.Account, error) {
 	acc.ID = uuid.New().String()
 	acc.CreatedAt = time.Now()
@@ -15,11 +26,15 @@ func CreateAccount(db *sqlx.DB, acc models.Account) (models.Account, error) {
 
 	query := `INSERT INTO accounts (id, account_name, account_type, local_share, notes, is_active, created_at, updated_at)
               VALUES (:id, :account_name, :account_type, :local_share, :notes, :is_active, :created_at, :updated_at)`
+	
+	return exercuteQuery(db, query, acc)
+}
 
-	_, err := db.NamedExec(query, acc)
-	if err != nil {
-		return models.Account{}, err
-	}
+func UpdateAccount(db *sqlx.DB, acc models.Account) (models.Account, error) {
+	acc.UpdatedAt = time.Now()
 
-	return acc, nil
+	query := `UPDATE accounts SET account_name = :account_name, account_type = :account_type, local_share = :local_share, notes = :notes, is_active = :is_active, updated_at = :updated_at 
+			  WHERE id = :id`
+
+	return exercuteQuery(db, query, acc)
 }
