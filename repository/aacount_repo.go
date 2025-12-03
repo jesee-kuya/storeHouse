@@ -61,3 +61,13 @@ func GetAccount(db *sqlx.DB, id string) (models.Account, error) {
 
 	return acc, nil
 }
+
+func GetAllAccounts(db *sqlx.DB) ([]models.Account, error) {
+	var accs []models.Account
+	err := db.Select(&accs, "SELECT * FROM accounts")
+	if err != nil {
+		return nil, err
+	}
+
+	return accs, nil
+}
