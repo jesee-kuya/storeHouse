@@ -38,3 +38,16 @@ func UpdateAccount(db *sqlx.DB, acc models.Account) (models.Account, error) {
 
 	return exercuteQuery(db, query, acc)
 }
+
+func DeactivateAccount(db *sqlx.DB, id string) (models.Account, error) {
+	acc := models.Account{
+		ID: id,
+		IsActive: false,
+		UpdatedAt: time.Now(),
+	}
+
+	query := `UPDATE accounts SET is_active = :is_active, updated_at = :updated_at
+			  WHERE id = :id`
+
+	return exercuteQuery(db, query, acc)
+}
