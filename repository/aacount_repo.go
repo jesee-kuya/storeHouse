@@ -8,8 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-
-
 func exercuteQuery(db *sqlx.DB, query string, acc models.Account)  (models.Account, error) {
 	_, err := db.NamedExec(query, acc)
 	if err != nil {
