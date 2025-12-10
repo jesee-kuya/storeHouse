@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
@@ -21,10 +22,10 @@ type Account struct {
 type AccountType string
 
 const (
-	AccountBank     AccountType = "Bank"
-	AccountExpense  AccountType = "Expense"
-	AccountIncome   AccountType = "Income"
-	AccountAsset    AccountType = "Asset"
+	AccountBank      AccountType = "Bank"
+	AccountExpense   AccountType = "Expense"
+	AccountIncome    AccountType = "Income"
+	AccountAsset     AccountType = "Asset"
 	AccountLiability AccountType = "liability"
 )
 
@@ -46,13 +47,27 @@ type CreateAccountRequest struct {
 	Notes       *string  `json:"notes"`
 }
 
+// Validate validates the CreateAccountRequest
+func (req *CreateAccountRequest) Validate() error {
+	if req.AccountName == "" {
+		return errors.New("account name is required")
+	}
+	if req.AccountType == "" {
+		return errors.New("account type is required")
+	}
+
+	// Validate account type
+	account := Account{AccountType: req.AccountType}
+	return account.ValidateAccountType()
+}
+
 // UpdateAccountRequest represents the request for updating an account
 type UpdateAccountRequest struct {
-	AccountName *string   `json:"account_name" binding:"max=100"`
-	AccountType *string   `json:"account_type"`
-	LocalShare  *float64  `json:"local_share"`
-	Notes       *string   `json:"notes"`
-	IsActive    *bool     `json:"is_active"`
+	AccountName *string  `json:"account_name" binding:"max=100"`
+	AccountType *string  `json:"account_type"`
+	LocalShare  *float64 `json:"local_share"`
+	Notes       *string  `json:"notes"`
+	IsActive    *bool    `json:"is_active"`
 }
 
 // AccountResponse represents the account response
