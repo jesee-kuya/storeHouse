@@ -1,15 +1,18 @@
 package main
 
 import (
-	. "storeHouse/database"
+	"storeHouse/database"
+	hanlers "storeHouse/hanlers"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
-	db := ConnectDB()
+	db := database.ConnectDB()
 	defer db.Close()
 
-	ApplyMigrations(db)
+	database.ApplyMigrations(db)
 
+	// Start the HTTP server
+	hanlers.StartServer(db)
 }
