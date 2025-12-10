@@ -10,11 +10,12 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func ConnectDB() *sql.DB {
+func ConnectDB() *sqlx.DB {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  No .env file found, using system environment variables")
@@ -58,11 +59,13 @@ func ConnectDB() *sql.DB {
 		fmt.Println("✅ Database created successfully.")
 	}
 
-	// Connect to the actual database
-	db, err := sql.Open("postgres", dbURL)
+	// Connect to the actual database using sqlx
+	sqlDB, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal("❌ Failed to connect to target database:", err)
 	}
+
+	db := sqlx.NewDb(sqlDB, "postgres")
 
 	if err = db.Ping(); err != nil {
 		log.Fatal("❌ Failed to ping target database:", err)
@@ -77,8 +80,8 @@ func ConnectDB() *sql.DB {
 	return db
 }
 
-func ApplyMigrations(db *sql.DB) {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+func ApplyMigrations(db *sqlx.DB) {
+	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
