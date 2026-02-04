@@ -1,10 +1,12 @@
--- Expenses and Withdrowals from accounts
-CREATE TABLE receipts (
+-- Expenses and withdrawals from accounts
+CREATE TABLE expenditure (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    transaction_id UUID REFERENCES transactions(id) NOT NULL,
-    perticulars VARCHAR(255) NOT NULL,
-    bank_account UUID REFERENCES accounts(id) NOT NULL,
-    amount NUMERIC(10, 2) NOT NULL,
+    transaction_id UUID NOT NULL REFERENCES transactions(id),
+    particulars VARCHAR(255) NOT NULL,
+    bank_account UUID NOT NULL REFERENCES accounts(id),
+    amount NUMERIC(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE Expenditure IS 'expenses and withdrawals from accounts';
+COMMENT ON TABLE expenditure IS
+'Expenses and withdrawals from accounts';
