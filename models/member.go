@@ -11,7 +11,7 @@ type Member struct {
 	PhoneNumber string        `json:"phone_number" db:"phone_number" binding:"required,max=20"`
 	Email       *string       `json:"email" db:"email"`
 	Notes       *string       `json:"notes" db:"notes"`
-	GroupID     *string       `json:"group_id" db:"group"`
+	GroupID     *string       `json:"group_id" db:"group_id"`
 	Group       *MembersGroup `json:"group,omitempty" db:"-"`
 	CreatedBy   string        `json:"created_by" db:"created_by"`
 	CreatedAt   time.Time     `json:"created_at" db:"created_at"`
